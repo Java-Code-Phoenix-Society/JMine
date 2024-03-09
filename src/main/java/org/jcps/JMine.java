@@ -514,9 +514,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      */
     public void loadImages() {
         final int n = 32;
-        int w, h;
-        w = this.getSize().width;
-        h = this.getSize().height;
+        int w = this.getSize().width, h = this.getSize().height;
         this.buffer = this.createImage(w, h);
         if (this.buffer == null) {
             this.buffer = new BufferedImage(w, w, BufferedImage.TYPE_INT_ARGB);
@@ -529,10 +527,13 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
         } else if (s.lastIndexOf("/") != s.length() - 1) {
             s = s + "/";
         }
-        Object f = this.getClass().getResource("/"); // works Object f = this.getClass().getResource("/images/0.gif");
-        assert f != null;
-
-
+        // what works: Object f = this.getClass().getResource("/images/0.gif");
+        // So, we check if the resources are available or otherwise use relative path.
+        Object f = this.getClass().getResource("/");
+        if (f == null) {
+            System.out.println("DEBUG: no F");
+            f = "/";
+        }
         for (int i = 0; i < 16; ++i) {
             final String string = i + ".gif";
             MineTile.images[i] = this.getImage(f.toString(), s + string);
@@ -632,17 +633,20 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
         this.clearScreen = true;
         this.setFace(Smile.LOSE);
         this.stopCounter();
-        for (int x = 0; x < this.tiles.length; ++x) {
-            for (int y = 0; y < this.tiles[0].length; ++y) {
+
+        for (int x = 0; x < this.tiles.length; x++) {
+            for (int y = 0; y < this.tiles[0].length; y++) {
                 MineTile currentTile = this.tiles[x][y];
-                if (currentTile.index == MineTile.HIDDEN) {
-                    if (currentTile.isMine()) {
-                        currentTile.setRevealed(true);
-                        this.touch(x, y, MineTile.MINE);
-                    } else if (currentTile.index == MineTile.FLAG) {
-                        currentTile.setRevealed(true);
-                        this.touch(x, y, MineTile.WRONG);
-                    }
+                if (currentTile.revealed()) {
+                    continue; // Skip already revealed tiles
+                }
+
+                if (currentTile.isMine() && currentTile.index == MineTile.HIDDEN) {
+                    currentTile.setRevealed(true);
+                    this.touch(x, y, MineTile.MINE);
+                } else if (currentTile.index == MineTile.FLAG && !currentTile.isMine()) {
+                    currentTile.setRevealed(true);
+                    this.touch(x, y, MineTile.WRONG);
                 }
             }
         }
