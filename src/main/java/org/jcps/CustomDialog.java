@@ -1,5 +1,6 @@
 package org.jcps;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -77,11 +78,11 @@ class CustomDialog extends Dialog implements ActionListener, WindowListener {
     /**
      * The OK button for confirming the custom game settings.
      */
-    private final Button okButton;
+    private final JButton okButton;
     /**
      * The Cancel button for canceling the custom game settings.
      */
-    private final Button cancelButton;
+    private final JButton cancelButton;
     /**
      * The parent frame of the dialog.
      */
@@ -109,9 +110,9 @@ class CustomDialog extends Dialog implements ActionListener, WindowListener {
         this.setFont(CustomDialog.DEFAULT_FONT);
         this.setBackground(CustomDialog.DEFAULT_BACKGROUND);
         this.setForeground(foreground);
-        (this.okButton = new Button("OK")).addActionListener(this);
+        (this.okButton = new JButton("OK")).addActionListener(this);
         this.okButton.setBackground(foreground);
-        (this.cancelButton = new Button("Cancel")).addActionListener(this);
+        (this.cancelButton = new JButton("Cancel")).addActionListener(this);
         this.cancelButton.setBackground(foreground);
         this.widthField = new TextField(3);
         this.heightField = new TextField(3);
