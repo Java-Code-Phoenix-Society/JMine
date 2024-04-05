@@ -1,4 +1,4 @@
-package org.jcps;
+package dev.jcps;
 
 /**
  * Represents a score in a game, consisting of a player's name and the time achieved.

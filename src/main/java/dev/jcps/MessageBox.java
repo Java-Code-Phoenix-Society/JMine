@@ -1,4 +1,4 @@
-package org.jcps;
+package dev.jcps;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -110,10 +110,10 @@ class MessageBox extends Dialog implements ActionListener, WindowListener {
     /**
      * Constructs a new MessageBox with the specified owner frame, title, message text, width, and button option.
      *
-     * @param owner the owner frame
-     * @param title the title of the message box
-     * @param text the message text
-     * @param width the width of the message box
+     * @param owner  the owner frame
+     * @param title  the title of the message box
+     * @param text   the message text
+     * @param width  the width of the message box
      * @param option the button option for the message box
      */
     public MessageBox(final Frame owner, final String title, final String text, final int width, final int option) {
@@ -165,7 +165,7 @@ class MessageBox extends Dialog implements ActionListener, WindowListener {
      *
      * @param frame the owner frame
      * @param title the title of the message box
-     * @param text the message text
+     * @param text  the message text
      * @param width the width of the message box
      */
     public MessageBox(final Frame frame, final String title, final String text, final int width) {

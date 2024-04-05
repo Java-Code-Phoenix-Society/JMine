@@ -1,4 +1,4 @@
-package org.jcps;
+package dev.jcps;
 
 import javax.swing.*;
 import java.awt.*;
@@ -429,16 +429,6 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
     }
 
     /**
-     * Get the specified value from the parameter map.
-     *
-     * @param parameter value to retrieve from the parameter map
-     * @return the value of the parameter with the specified name, or null if the parameter is not found
-     */
-    private String getParameter(String parameter) {
-        return gameParams.paramMap.get(parameter);
-    }
-
-    /**
      * Loads parameters for configuring the game.
      * <p>
      * This method retrieves parameters from the applet's HTML embedding code to customize the game settings.
@@ -491,19 +481,6 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
     }
 
     /**
-     * Displays a status message.
-     * <p>
-     * This method prints the specified status message to the standard output stream.
-     * It is used to provide information about the loading status of images during the game initialization process.
-     * </p>
-     *
-     * @param s The status message to be displayed.
-     */
-    private void showStatus(String s) {
-        System.out.println(s);
-    }
-
-    /**
      * Loads images required for the game.
      * <p>
      * This method initializes and loads images necessary for the game, such as mine tiles, faces, and timer digits.
@@ -521,56 +498,54 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
         }
         (this.bufferGC = this.buffer.getGraphics()).setColor(this.background);
         final MediaTracker mediaTracker = new MediaTracker(this);
-        String s = this.getParameter("image_path");
-        if (s == null) {
-            s = this.getCodeBase().toString();
-        } else if (s.lastIndexOf("/") != s.length() - 1) {
-            s = s + "/";
+        String imagePath = this.getParameter("image_path");
+        if (imagePath == null) {
+            imagePath = "images/";
+        } else if (imagePath.lastIndexOf("/") != imagePath.length() - 1) {
+            imagePath = imagePath + "/";
         }
-        // what works: Object f = this.getClass().getResource("/images/0.gif");
-        // So, we check if the resources are available or otherwise use relative path.
-        Object f = this.getClass().getResource("/");
-        if (f == null) {
+        Object cb = this.getCodeBase().toString();
+        if (cb == null) {
             System.out.println("DEBUG: no F");
-            f = "/";
+            cb = "/";
         }
         for (int i = 0; i < 16; ++i) {
             final String string = i + ".gif";
-            MineTile.images[i] = this.getImage(f.toString(), s + string);
+            MineTile.images[i] = this.getImage(cb.toString(), imagePath + string);
             mediaTracker.addImage(MineTile.images[i], i);
             try {
-                this.showStatus("Loading image: " + (i + 1) + "/" + n + " (" + s + string + ")");
+                this.showStatus("Loading image: " + (i + 1) + "/" + n + " (" + imagePath + string + ")");
                 mediaTracker.waitForID(i);
             } catch (final InterruptedException ignored) {
             }
             if (mediaTracker.isErrorID(i)) {
-                this.showStatus("Error loading " + s + string);
+                this.showStatus("Error loading " + imagePath + string);
             }
         }
         this.imgFace = new Image[Smile.NUM_FACES];
         for (int j = 0; j < Smile.NUM_FACES; ++j) {
             final String string2 = "f" + j + ".gif";
-            mediaTracker.addImage(this.imgFace[j] = this.getImage(f.toString(), s + string2), j + 16);
+            mediaTracker.addImage(this.imgFace[j] = this.getImage(cb.toString(), imagePath + string2), j + 16);
             try {
-                this.showStatus("Loading image: " + (j + 16 + 1) + "/" + n + " (" + s + string2 + ")");
+                this.showStatus("Loading image: " + (j + 16 + 1) + "/" + n + " (" + imagePath + string2 + ")");
                 mediaTracker.waitForID(j + 16);
             } catch (final InterruptedException ignored) {
             }
             if (mediaTracker.isErrorID(j + 16)) {
-                this.showStatus("Error loading " + s + string2);
+                this.showStatus("Error loading " + imagePath + string2);
             }
         }
         this.imgTime = new Image[11];
         for (int k = 0; k < 11; ++k) {
-            final String string3 = "t" + k + ".gif";
-            mediaTracker.addImage(this.imgTime[k] = this.getImage(f.toString(), s + string3), k + 16 + 5 + 1);
+            final String tn = "t" + k + ".gif";
+            mediaTracker.addImage(this.imgTime[k] = this.getImage(cb.toString(), imagePath + tn), k + 16 + 5 + 1);
             try {
-                this.showStatus("Loading image: " + (k + 16 + 5 + 1) + "/" + n + " (" + s + string3 + ")");
+                this.showStatus("Loading image: " + (k + 16 + 5 + 1) + "/" + n + " (" + imagePath + tn + ")");
                 mediaTracker.waitForID(k + 16 + 5);
             } catch (final InterruptedException ignored) {
             }
             if (mediaTracker.isErrorID(k + 16 + 5)) {
-                this.showStatus("Error loading " + s + string3);
+                this.showStatus("Error loading " + imagePath + tn);
             }
         }
     }

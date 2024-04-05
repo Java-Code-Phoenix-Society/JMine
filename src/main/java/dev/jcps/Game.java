@@ -1,4 +1,4 @@
-package org.jcps;
+package dev.jcps;
 
 /**
  * The Game class represents a game with a specified width, height, and number of mines.
