@@ -4,9 +4,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Random;
-import java.util.Vector;
 
 /**
  * JMine is a class representing a Minesweeper game panel. It extends JPanel and implements
@@ -238,7 +238,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
     /**
      * Vector storing mine tiles to be painted.
      */
-    private Vector<MineTile> paintMe;
+    private ArrayList<MineTile> paintMe;
 
     /**
      * Array of images representing different faces for the game.
@@ -414,7 +414,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
         this.addMouseListener(this);
         this.addMouseMotionListener(this);
         this.addKeyListener(this);
-        this.paintMe = new Vector<>();
+        this.paintMe = new ArrayList<>();
         this.flagDigits = new int[3];
         this.timeDigits = new int[3];
         this.setFlags(0);
@@ -517,6 +517,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
                 this.showStatus("Loading image: " + (i + 1) + "/" + n + " (" + imagePath + string + ")");
                 mediaTracker.waitForID(i);
             } catch (final InterruptedException ignored) {
+                Thread.currentThread().interrupt();
             }
             if (mediaTracker.isErrorID(i)) {
                 this.showStatus("Error loading " + imagePath + string);
@@ -530,6 +531,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
                 this.showStatus("Loading image: " + (j + 16 + 1) + "/" + n + " (" + imagePath + string2 + ")");
                 mediaTracker.waitForID(j + 16);
             } catch (final InterruptedException ignored) {
+                Thread.currentThread().interrupt();
             }
             if (mediaTracker.isErrorID(j + 16)) {
                 this.showStatus("Error loading " + imagePath + string2);
@@ -543,6 +545,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
                 this.showStatus("Loading image: " + (k + 16 + 5 + 1) + "/" + n + " (" + imagePath + tn + ")");
                 mediaTracker.waitForID(k + 16 + 5);
             } catch (final InterruptedException ignored) {
+                Thread.currentThread().interrupt();
             }
             if (mediaTracker.isErrorID(k + 16 + 5)) {
                 this.showStatus("Error loading " + imagePath + tn);
@@ -582,6 +585,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
             try {
                 Thread.sleep(500L);
             } catch (final InterruptedException ignored) {
+                Thread.currentThread().interrupt();
             }
             // Prompt for name and update high score
             final NameDialog nameDialog = new NameDialog(new Frame(), this.mod.getBestScore(this.difficulty).name());
@@ -665,12 +669,12 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
         JMine.TIME_X = JMine.OFFSET_X + dWidth * TILE_SIZE - 39;
         JMine.TIME_Y = 10;
 
-        this.paintMe = new Vector<>();
+        this.paintMe = new ArrayList<>();
         int n = 0;
         for (int i = 0; i < dWidth; ++i) {
             for (int j = 0; j < dHeight; ++j) {
                 this.tiles[i][j] = new MineTile(n++ < difficulty.mines());
-                this.paintMe.addElement(this.tiles[i][j]);
+                this.paintMe.add(this.tiles[i][j]);
             }
         }
         Random rand = new Random();
@@ -816,7 +820,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      */
     public void touch(final int x, final int y, final int index) {
         if (this.tiles[x][y].index != index) {
-            this.paintMe.addElement(this.tiles[x][y]);
+            this.paintMe.add(this.tiles[x][y]);
             this.tiles[x][y].touch(index);
         }
     }
@@ -945,17 +949,12 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
             }
             return;
         }
-        for (int k = 0; k < this.paintMe.size(); ++k) {
-            final MineTile mineTile = this.paintMe.elementAt(k);
-            if (this.tiles == null) {
-                System.out.println("NULL!");
-            } else {
-                mineTile.draw(graphics, JMine.OFFSET_X + 16 * mineTile.x,
-                        JMine.OFFSET_Y + 16 * mineTile.y, this);
-                this.tiles[mineTile.x][mineTile.y].touched = false;
-            }
+        for (final MineTile mineTile : this.paintMe) {
+            mineTile.draw(graphics, JMine.OFFSET_X + 16 * mineTile.x,
+                    JMine.OFFSET_Y + 16 * mineTile.y, this);
+            this.tiles[mineTile.x][mineTile.y].touched = false;
         }
-        this.paintMe.removeAllElements();
+        this.paintMe.clear();
     }
 
     /**
@@ -1579,7 +1578,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
         if (x < 0 || y < 0 || x >= this.tiles.length || y >= this.tiles[0].length) {
             return;
         }
-        this.paintMe.addElement(this.tiles[x][y]);
+        this.paintMe.add(this.tiles[x][y]);
         this.tiles[x][y].retouch();
     }
 
@@ -1595,7 +1594,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
             return;
         }
         if (!this.tiles[x][y].getRevealed()) {
-            this.paintMe.addElement(this.tiles[x][y]);
+            this.paintMe.add(this.tiles[x][y]);
             this.tiles[x][y].touch();
         }
     }
