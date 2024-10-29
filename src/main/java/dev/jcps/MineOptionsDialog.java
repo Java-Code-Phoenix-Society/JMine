@@ -1,5 +1,7 @@
 package dev.jcps;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -256,7 +258,7 @@ class MineOptionsDialog extends Dialog implements ActionListener, WindowListener
      *
      * @param actionEvent the action event
      */
-    public void actionPerformed(final ActionEvent actionEvent) {
+    public void actionPerformed(final @NotNull ActionEvent actionEvent) {
         if (actionEvent.getSource() == this.okButton) {
             this.activated = true;
             this.setVisible(false);
@@ -310,7 +312,7 @@ class MineOptionsDialog extends Dialog implements ActionListener, WindowListener
      *
      * @param itemEvent the event to be processed
      */
-    public void itemStateChanged(final ItemEvent itemEvent) {
+    public void itemStateChanged(final @NotNull ItemEvent itemEvent) {
         if (itemEvent.getSource() == this.beginnerCheck && this.beginnerCheck.getState()) {
             this.difficulty = JMine.BEGINNER;
             return;

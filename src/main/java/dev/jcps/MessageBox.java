@@ -1,5 +1,7 @@
 package dev.jcps;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -177,7 +179,7 @@ class MessageBox extends Dialog implements ActionListener, WindowListener {
      *
      * @param actionEvent the action event
      */
-    public void actionPerformed(final ActionEvent actionEvent) {
+    public void actionPerformed(final @NotNull ActionEvent actionEvent) {
         if (actionEvent.getSource() == this.close) {
             this.setVisible(false);
             return;

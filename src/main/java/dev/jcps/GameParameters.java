@@ -1,5 +1,7 @@
 package dev.jcps;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.HashMap;
 
 
@@ -49,7 +51,7 @@ public class GameParameters {
      *
      * @param hashMap The HashMap containing key-value pairs representing various game parameters.
      */
-    GameParameters(HashMap<String, String> hashMap) {
+    GameParameters(@NotNull HashMap<String, String> hashMap) {
         paramMap = new GameParameters().paramMap;
 
         paramMap.put(DIFFICULTY, hashMap.get(DIFFICULTY));

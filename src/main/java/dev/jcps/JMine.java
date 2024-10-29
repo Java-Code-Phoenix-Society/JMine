@@ -40,6 +40,11 @@ import java.util.Random;
  */
 public class JMine extends JPanel implements MouseListener, MouseMotionListener, KeyListener, JavaAppletAdapter {
     /**
+     * MacOS has an odd glitch. This is a hack to workaround it.
+     */
+    @SuppressWarnings("all")
+    public static boolean osHack = false;
+    /**
      * Tile size in pixels
      */
     public static final int TILE_SIZE = 16;
@@ -112,7 +117,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
     /**
      * The default background color for the game.
      */
-    private static final Color DEFAULT_BACKGROUND;
+    private static Color defaultBackground;
 
     /**
      * The default foreground color for the game.
@@ -145,10 +150,10 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      * The frame for the JMine game.
      */
     static JFrame frame;
-    private Random rand;
+    private final Random rand;
 
     static {
-        DEFAULT_BACKGROUND = Color.decode("#434434");
+        defaultBackground = Color.decode("#434434");
         DEFAULT_FOREGROUND = Color.decode("#000000");
         JMine.setOffsetX(10);
         JMine.setOffsetY(40);
@@ -167,7 +172,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
     /**
      * Stores parameters related to the game configuration.
      */
-    public GameParameters gameParams;
+    public transient GameParameters gameParams;
     /**
      * Timer used to update the game state.
      */
@@ -220,12 +225,12 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
     /**
      * Stores the mine tiles grid for the game.
      */
-    private MineTile[][] tiles;
+    private transient MineTile[][] tiles;
 
     /**
      * Vector storing mine tiles to be painted.
      */
-    private ArrayList<MineTile> paintMe;
+    private transient ArrayList<MineTile> paintMe;
 
     /**
      * Array of images representing different faces for the game.
@@ -300,7 +305,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
     /**
      * The difficulty level of the game.
      */
-    private Game difficulty;
+    private transient Game difficulty;
 
     /**
      * Dialog for configuring game options.
@@ -332,7 +337,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      */
     public JMine() {
         this.rand = new Random();
-        this.backgroundColor = JMine.DEFAULT_BACKGROUND;
+        this.backgroundColor = JMine.defaultBackground;
         this.foregroundColor = JMine.DEFAULT_FOREGROUND;
         this.mButton1 = false;
         this.mButton2 = false;
@@ -364,6 +369,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      * @param args The command-line arguments (not used in this method).
      */
     public static void main(String @NotNull [] args) {
+        JMine.osHack = System.getProperty("os.name").contains("Mac");
         // Handle command line arguments
         boolean debugLogging = false;
         boolean consolePrint = false;
@@ -385,6 +391,10 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
             setLoggingLevel("INFO");
         } else {
             disableConsoleLogging();
+        }
+
+        if (JMine.osHack) {
+            JMine.defaultBackground = Color.decode("#eeeeee");
         }
 
         JMine jmine = new JMine();
@@ -553,10 +563,10 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
             try {
                 this.backgroundColor = Color.decode(parameter);
             } catch (final NumberFormatException ex) {
-                this.backgroundColor = JMine.DEFAULT_BACKGROUND;
+                this.backgroundColor = JMine.defaultBackground;
             }
         } else {
-            this.backgroundColor = JMine.DEFAULT_BACKGROUND;
+            this.backgroundColor = JMine.defaultBackground;
         }
         this.setBackground(this.backgroundColor);
         final String parameter2 = this.getParameter("fgColor");
@@ -607,7 +617,8 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
         if (this.buffer == null) {
             this.buffer = new BufferedImage(w, w, BufferedImage.TYPE_INT_ARGB);
         }
-        (this.bufferGC = this.buffer.getGraphics()).setColor(this.backgroundColor);
+        this.bufferGC = this.buffer.getGraphics();
+        this.bufferGC.setColor(this.backgroundColor);
         final MediaTracker mediaTracker = new MediaTracker(this);
         String imagePath = this.getParameter("image_path");
         if (imagePath == null) {
@@ -626,29 +637,31 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
         this.imgFace = new Image[Smile.NUM_FACES];
         for (int j = 0; j < Smile.NUM_FACES; ++j) {
             final String string2 = "f" + j + ".gif";
-            mediaTracker.addImage(this.imgFace[j] = this.getImage(cb.toString(), imagePath + string2), j + 16);
+            this.imgFace[j] = this.getImage(cb.toString(), imagePath + string2);
+            mediaTracker.addImage(this.imgFace[j], j + 16);
             try {
-                this.showStatus(LOADING_IMAGE + (j + 16 + 1) + "/" + n + " (" + imagePath + string2 + ")");
+                logger.info("{}{}/{} ({}{})", LOADING_IMAGE, n, j + 16 + 1, imagePath, string2);
                 mediaTracker.waitForID(j + 16);
             } catch (final InterruptedException ignored) {
                 Thread.currentThread().interrupt();
             }
             if (mediaTracker.isErrorID(j + 16)) {
-                this.showStatus(ERROR_LOADING + imagePath + string2);
+                logger.error(ERROR_LOADING + "{}{}", imagePath, string2);
             }
         }
         this.imgTime = new Image[11];
         for (int k = 0; k < 11; ++k) {
             final String tn = "t" + k + ".gif";
-            mediaTracker.addImage(this.imgTime[k] = this.getImage(cb.toString(), imagePath + tn), k + 16 + 5 + 1);
+            this.imgTime[k] = this.getImage(cb.toString(), imagePath + tn);
+            mediaTracker.addImage(this.imgTime[k], k + 16 + 5 + 1);
             try {
-                this.showStatus(LOADING_IMAGE + (k + 16 + 5 + 1) + "/" + n + " (" + imagePath + tn + ")");
+                logger.info("{}{}/{} ({}{})", LOADING_IMAGE, n, k + 16 + 5 + 1, imagePath, tn);
                 mediaTracker.waitForID(k + 16 + 5);
             } catch (final InterruptedException ignored) {
                 Thread.currentThread().interrupt();
             }
             if (mediaTracker.isErrorID(k + 16 + 5)) {
-                this.showStatus(ERROR_LOADING + imagePath + tn);
+                logger.warn(ERROR_LOADING + "{}{}", imagePath, tn);
             }
         }
     }
@@ -658,13 +671,13 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
         MineTile.images[i] = this.getImage(cb.toString(), imagePath + string);
         mediaTracker.addImage(MineTile.images[i], i);
         try {
-            this.showStatus(LOADING_IMAGE + (i + 1) + "/" + n + " (" + imagePath + string + ")");
+            logger.info("{}{}/{} ({}{})", LOADING_IMAGE, i + 1, n, imagePath, string);
             mediaTracker.waitForID(i);
         } catch (final InterruptedException ignored) {
             Thread.currentThread().interrupt();
         }
         if (mediaTracker.isErrorID(i)) {
-            this.showStatus(ERROR_LOADING + imagePath + string);
+            logger.error(ERROR_LOADING + "{}{}", imagePath, string);
         }
     }
 
@@ -823,7 +836,8 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
             }
         }
         this.hidden = dWidth * dHeight;
-        this.setFlags(this.flags = difficulty.mines());
+        this.flags = difficulty.mines();
+        this.setFlags(this.flags);
         this.mines = difficulty.mines();
         this.flagsChanged = true;
         this.timeChanged = true;
@@ -832,7 +846,8 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
         this.newGame = true;
         frame.revalidate();
         frame.repaint();
-        this.draw(this.clearScreen = true);
+        this.clearScreen = true;
+        this.draw(true);
     }
 
     /**
@@ -948,6 +963,11 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      */
     @Override
     public void paint(final Graphics graphics) {
+        // Mac OS fix
+        if (JMine.osHack) {
+            this.paintAll = true;
+        }
+
         this.paintFace(graphics, this.paintAll);
         this.paintFlags(graphics, this.paintAll);
         this.paintTime(graphics, this.paintAll);
