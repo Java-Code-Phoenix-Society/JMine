@@ -24,8 +24,6 @@ public class Game {
      * The number of mines in the game.
      */
     int mines;
-    int x;
-    int y;
 
     /**
      * Constructs a new Game object with the specified width, height, and number of mines.

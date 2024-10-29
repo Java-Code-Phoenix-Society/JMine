@@ -1,5 +1,7 @@
 package dev.jcps;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -56,6 +58,7 @@ class CustomDialog extends Dialog implements ActionListener, WindowListener {
      * The default font for the dialog.
      */
     private static final Font DEFAULT_FONT;
+    public static final String ERROR_STR = "Error";
 
     static {
         DEFAULT_BACKGROUND = new Color(96, 0, 0);
@@ -86,7 +89,7 @@ class CustomDialog extends Dialog implements ActionListener, WindowListener {
     /**
      * The parent frame of the dialog.
      */
-    private final Frame parent;
+    private final Frame parentFrame;
     /**
      * The game instance.
      */
@@ -106,13 +109,15 @@ class CustomDialog extends Dialog implements ActionListener, WindowListener {
         Color foreground = CustomDialog.DEFAULT_FOREGROUND;
         this.activated = false;
         this.setBounds(CO_ORD_X, CO_ORD_Y, WIDTH, HEIGHT);
-        this.parent = frame;
+        this.parentFrame = frame;
         this.setFont(CustomDialog.DEFAULT_FONT);
         this.setBackground(CustomDialog.DEFAULT_BACKGROUND);
         this.setForeground(foreground);
-        (this.okButton = new JButton("OK")).addActionListener(this);
+        this.okButton = new JButton("OK");
+        this.okButton.addActionListener(this);
         this.okButton.setBackground(foreground);
-        (this.cancelButton = new JButton("Cancel")).addActionListener(this);
+        this.cancelButton = new JButton("Cancel");
+        this.cancelButton.addActionListener(this);
         this.cancelButton.setBackground(foreground);
         this.widthField = new TextField(3);
         this.heightField = new TextField(3);
@@ -175,10 +180,11 @@ class CustomDialog extends Dialog implements ActionListener, WindowListener {
      *
      * @param actionEvent the action event
      */
-    public void actionPerformed(final ActionEvent actionEvent) {
+    public void actionPerformed(final @NotNull ActionEvent actionEvent) {
         if (actionEvent.getSource() != this.okButton) {
             if (actionEvent.getSource() == this.cancelButton) {
-                this.setVisible(this.activated = false);
+                this.activated = false;
+                this.setVisible(false);
                 this.setModal(false);
             }
             return;
@@ -192,23 +198,23 @@ class CustomDialog extends Dialog implements ActionListener, WindowListener {
             int3 = Integer.parseInt(this.minesField.getText());
             this.game = new Game(int1, int2, int3);
         } catch (final NumberFormatException ex) {
-            new MessageBox(this.parent, "Error", "Integer values please", 150);
+            new MessageBox(this.parentFrame, ERROR_STR, "Integer values please", 150);
             return;
         }
         if (int3 >= int1 * int2) {
-            new MessageBox(this.parent, "Error", "Impossible Game!", 150);
+            new MessageBox(this.parentFrame, ERROR_STR, "Impossible Game!", 150);
             return;
         }
         if (int1 > 30 || int1 < 8) {
-            new MessageBox(this.parent, "Error", "Choose width from " + 8 + " to " + 30, 150);
+            new MessageBox(this.parentFrame, ERROR_STR, "Choose width from " + 8 + " to " + 30, 150);
             return;
         }
         if (int2 > 24 || int2 < 8) {
-            new MessageBox(this.parent, "Error", "Choose height from " + 8 + " to " + 24, 150);
+            new MessageBox(this.parentFrame, ERROR_STR, "Choose height from " + 8 + " to " + 24, 150);
             return;
         }
         if (int3 > JMine.MAX_MINES || int3 < 10) {
-            new MessageBox(this.parent, "Error", "Choose mines from " + 10 + " to " + JMine.MAX_MINES, 150);
+            new MessageBox(this.parentFrame, ERROR_STR, "Choose mines from " + 10 + " to " + JMine.MAX_MINES, 150);
             return;
         }
         this.activated = true;
@@ -232,6 +238,7 @@ class CustomDialog extends Dialog implements ActionListener, WindowListener {
      * @param windowEvent the window event
      */
     public void windowClosed(final WindowEvent windowEvent) {
+        // Empty
     }
 
     /**
@@ -240,6 +247,7 @@ class CustomDialog extends Dialog implements ActionListener, WindowListener {
      * @param windowEvent the window event
      */
     public void windowOpened(final WindowEvent windowEvent) {
+        // Empty
     }
 
     /**
@@ -248,6 +256,7 @@ class CustomDialog extends Dialog implements ActionListener, WindowListener {
      * @param windowEvent the window event
      */
     public void windowIconified(final WindowEvent windowEvent) {
+        // Empty
     }
 
     /**
@@ -256,6 +265,7 @@ class CustomDialog extends Dialog implements ActionListener, WindowListener {
      * @param windowEvent the window event
      */
     public void windowDeiconified(final WindowEvent windowEvent) {
+        // Empty
     }
 
     /**
@@ -264,6 +274,7 @@ class CustomDialog extends Dialog implements ActionListener, WindowListener {
      * @param windowEvent the window event
      */
     public void windowActivated(final WindowEvent windowEvent) {
+        // Empty
     }
 
     /**
@@ -272,5 +283,6 @@ class CustomDialog extends Dialog implements ActionListener, WindowListener {
      * @param windowEvent the window event
      */
     public void windowDeactivated(final WindowEvent windowEvent) {
+        // Empty
     }
 }

@@ -113,7 +113,7 @@ class MineOptionsDialog extends Dialog implements ActionListener, WindowListener
     /**
      * Custom game object for storing custom game settings.
      */
-    Game CUSTOM;
+    Game custom;
 
     /**
      * The current selected game difficulty.
@@ -134,7 +134,7 @@ class MineOptionsDialog extends Dialog implements ActionListener, WindowListener
         super(frame, "JMine Options", false);
         Color foreground = MineOptionsDialog.DEFAULT_FOREGROUND;
         this.difficulty = JMine.BEGINNER;
-        this.CUSTOM = new Game(10, 10, 10);
+        this.custom = new Game(10, 10, 10);
         this.activated = false;
         this.setBounds(CO_ORD_X, CO_ORD_Y, WIDTH, HEIGHT);
         this.setFont(MineOptionsDialog.DEFAULT_FONT);
@@ -163,7 +163,7 @@ class MineOptionsDialog extends Dialog implements ActionListener, WindowListener
                 .addItemListener(this);
         (this.expertCheck = new Checkbox("Expert", this.difficulty == JMine.EXPERT, checkGroup))
                 .addItemListener(this);
-        (this.customCheck = new Checkbox("Custom...", this.difficulty == this.CUSTOM, checkGroup))
+        (this.customCheck = new Checkbox("Custom...", this.difficulty == this.custom, checkGroup))
                 .addItemListener(this);
         this.setLayout(new GridBagLayout());
         final GridBagConstraints constraints = new GridBagConstraints();
@@ -348,6 +348,7 @@ class MineOptionsDialog extends Dialog implements ActionListener, WindowListener
      * @param windowEvent the window event
      */
     public void windowClosed(final WindowEvent windowEvent) {
+        // Empty
     }
 
     /**
@@ -356,6 +357,7 @@ class MineOptionsDialog extends Dialog implements ActionListener, WindowListener
      * @param windowEvent the window event
      */
     public void windowOpened(final WindowEvent windowEvent) {
+        // Empty
     }
 
     /**
@@ -364,6 +366,7 @@ class MineOptionsDialog extends Dialog implements ActionListener, WindowListener
      * @param windowEvent the window event
      */
     public void windowIconified(final WindowEvent windowEvent) {
+        // Empty
     }
 
     /**
@@ -372,6 +375,7 @@ class MineOptionsDialog extends Dialog implements ActionListener, WindowListener
      * @param windowEvent the window event
      */
     public void windowDeiconified(final WindowEvent windowEvent) {
+        // Empty
     }
 
     /**
@@ -380,6 +384,7 @@ class MineOptionsDialog extends Dialog implements ActionListener, WindowListener
      * @param windowEvent the window event
      */
     public void windowActivated(final WindowEvent windowEvent) {
+        // Empty
     }
 
     /**
@@ -388,5 +393,6 @@ class MineOptionsDialog extends Dialog implements ActionListener, WindowListener
      * @param windowEvent the window event
      */
     public void windowDeactivated(final WindowEvent windowEvent) {
+        // Empty
     }
 }

@@ -208,7 +208,6 @@ class MineTile {
      */
     public void draw(final Graphics graphics, final int x, final int y, final ImageObserver imageObserver) {
         if (MineTile.images[this.index] == null) {
-            //System.out.println("NULL!!");
             return;
         }
         graphics.drawImage(MineTile.images[this.index], x, y, MineTile.images[this.index].getWidth(imageObserver),

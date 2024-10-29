@@ -80,7 +80,7 @@ class MessageBox extends Dialog implements ActionListener, WindowListener {
     /**
      * The event code representing the user's selection.
      */
-    public static int EVENT;
+    public static int pEvent;
 
     /**
      * The Close button for closing the message box.
@@ -90,22 +90,22 @@ class MessageBox extends Dialog implements ActionListener, WindowListener {
     /**
      * The OK button for confirming the message.
      */
-    private final Button ok;
+    private final Button btnOK;
 
     /**
      * The Cancel button for canceling the message.
      */
-    private final Button cancel;
+    private final Button btnCancel;
 
     /**
      * The Yes button for confirming a positive choice.
      */
-    private final Button yes;
+    private final Button btnYes;
 
     /**
      * The No button for confirming a negative choice.
      */
-    private final Button no;
+    private final Button btnNo;
 
     /**
      * Constructs a new MessageBox with the specified owner frame, title, message text, width, and button option.
@@ -123,31 +123,31 @@ class MessageBox extends Dialog implements ActionListener, WindowListener {
         this.addWindowListener(this);
         Label message = new Label(text, 1);
         this.close = new Button("Close");
-        this.ok = new Button("Ok");
-        this.cancel = new Button("Cancel");
-        this.yes = new Button("Yes");
-        this.no = new Button("No");
+        this.btnOK = new Button("Ok");
+        this.btnCancel = new Button("Cancel");
+        this.btnYes = new Button("Yes");
+        this.btnNo = new Button("No");
         this.close.addActionListener(this);
-        this.ok.addActionListener(this);
-        this.cancel.addActionListener(this);
-        this.yes.addActionListener(this);
-        this.no.addActionListener(this);
+        this.btnOK.addActionListener(this);
+        this.btnCancel.addActionListener(this);
+        this.btnYes.addActionListener(this);
+        this.btnNo.addActionListener(this);
         Panel buttonPanel = new Panel();
         switch (option) {
             case MessageBox.BTN_YESNOCANCEL: {
-                buttonPanel.add(this.yes);
-                buttonPanel.add(this.no);
-                buttonPanel.add(this.cancel);
+                buttonPanel.add(this.btnYes);
+                buttonPanel.add(this.btnNo);
+                buttonPanel.add(this.btnCancel);
                 break;
             }
             case MessageBox.BTN_YESNO: {
-                buttonPanel.add(this.yes);
-                buttonPanel.add(this.no);
+                buttonPanel.add(this.btnYes);
+                buttonPanel.add(this.btnNo);
                 break;
             }
             case MessageBox.BTN_OKCANCEL: {
-                buttonPanel.add(this.ok);
-                buttonPanel.add(this.cancel);
+                buttonPanel.add(this.btnOK);
+                buttonPanel.add(this.btnCancel);
                 break;
             }
             default: {
@@ -182,23 +182,23 @@ class MessageBox extends Dialog implements ActionListener, WindowListener {
             this.setVisible(false);
             return;
         }
-        if (actionEvent.getSource() == this.ok) {
-            MessageBox.EVENT = MessageBox.OK;
+        if (actionEvent.getSource() == this.btnOK) {
+            MessageBox.pEvent = MessageBox.OK;
             this.setVisible(false);
             return;
         }
-        if (actionEvent.getSource() == this.cancel) {
-            MessageBox.EVENT = MessageBox.CANCEL;
+        if (actionEvent.getSource() == this.btnCancel) {
+            MessageBox.pEvent = MessageBox.CANCEL;
             this.setVisible(false);
             return;
         }
-        if (actionEvent.getSource() == this.yes) {
-            MessageBox.EVENT = MessageBox.YES;
+        if (actionEvent.getSource() == this.btnYes) {
+            MessageBox.pEvent = MessageBox.YES;
             this.setVisible(false);
             return;
         }
-        if (actionEvent.getSource() == this.no) {
-            MessageBox.EVENT = MessageBox.NO;
+        if (actionEvent.getSource() == this.btnNo) {
+            MessageBox.pEvent = MessageBox.NO;
             this.setVisible(false);
         }
     }
@@ -218,6 +218,7 @@ class MessageBox extends Dialog implements ActionListener, WindowListener {
      * @param windowEvent the window event
      */
     public void windowClosed(final WindowEvent windowEvent) {
+        // Empty
     }
 
     /**
@@ -226,6 +227,7 @@ class MessageBox extends Dialog implements ActionListener, WindowListener {
      * @param windowEvent the window event
      */
     public void windowOpened(final WindowEvent windowEvent) {
+        // Empty
     }
 
     /**
@@ -234,6 +236,7 @@ class MessageBox extends Dialog implements ActionListener, WindowListener {
      * @param windowEvent the window event
      */
     public void windowIconified(final WindowEvent windowEvent) {
+        // Empty
     }
 
     /**
@@ -242,6 +245,7 @@ class MessageBox extends Dialog implements ActionListener, WindowListener {
      * @param windowEvent the window event
      */
     public void windowDeiconified(final WindowEvent windowEvent) {
+        // Empty
     }
 
     /**
@@ -250,6 +254,7 @@ class MessageBox extends Dialog implements ActionListener, WindowListener {
      * @param windowEvent the window event
      */
     public void windowActivated(final WindowEvent windowEvent) {
+        // Empty
     }
 
     /**
@@ -258,5 +263,6 @@ class MessageBox extends Dialog implements ActionListener, WindowListener {
      * @param windowEvent the window event
      */
     public void windowDeactivated(final WindowEvent windowEvent) {
+        // Empty
     }
 }

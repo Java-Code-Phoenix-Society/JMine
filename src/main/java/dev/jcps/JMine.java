@@ -1,9 +1,18 @@
 package dev.jcps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Random;
@@ -109,68 +118,46 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      * The default foreground color for the game.
      */
     private static final Color DEFAULT_FOREGROUND;
+    public static final String LOADING_IMAGE = "Loading image: ";
+    public static final String ERROR_LOADING = "Error loading ";
+    public static final Logger logger = LoggerFactory.getLogger(JMine.class);
 
-    /**
-     * The horizontal offset for positioning game components.
-     */
-    public static int OFFSET_X;
 
-    /**
-     * The vertical offset for positioning game components.
-     */
-    public static int OFFSET_Y;
+    private static int offsetX;
 
-    /**
-     * The x-coordinate for positioning the flags display.
-     */
-    public static int FLAGS_X;
+    private static int offsetY;
 
-    /**
-     * The y-coordinate for positioning the flags display.
-     */
-    public static int FLAGS_Y;
+    private static int flagsX;
 
-    /**
-     * The x-coordinate for positioning the face display.
-     */
-    public static int FACE_X;
+    private static int flagsY;
 
-    /**
-     * The y-coordinate for positioning the face display.
-     */
-    public static int FACE_Y;
+    private static int faceX;
 
-    /**
-     * The x-coordinate for positioning the timer display.
-     */
-    public static int TIME_X;
+    private static int faceY;
 
-    /**
-     * The y-coordinate for positioning the timer display.
-     */
-    public static int TIME_Y;
+    private static int timeX;
 
-    /**
-     * Indicates whether a 3-button mouse is supported.
-     */
-    public static boolean M_3BUTTON_MOUSE;
+    private static int timeY;
+
+    private static boolean m3ButtonMouse;
 
     /**
      * The frame for the JMine game.
      */
     static JFrame frame;
+    private Random rand;
 
     static {
         DEFAULT_BACKGROUND = Color.decode("#434434");
         DEFAULT_FOREGROUND = Color.decode("#000000");
-        JMine.OFFSET_X = 10;
-        JMine.OFFSET_Y = 40;
-        JMine.FLAGS_X = 3 + JMine.OFFSET_X;
-        JMine.FLAGS_Y = 10;
-        JMine.FACE_X = JMine.FLAGS_X + 39 + 3;
-        JMine.FACE_Y = 10;
-        JMine.TIME_X = JMine.FACE_X + 26 + 3;
-        JMine.TIME_Y = 10;
+        JMine.setOffsetX(10);
+        JMine.setOffsetY(40);
+        JMine.setFlagsX(3 + JMine.getOffsetX());
+        JMine.setFlagsY(10);
+        JMine.setFaceX(JMine.getFlagsX() + 39 + 3);
+        JMine.setFaceY(10);
+        JMine.setTimeX(JMine.getFaceX() + 26 + 3);
+        JMine.setTimeY(10);
         BEGINNER = new Game(MIN_X, MIN_Y, MIN_MINES);
         INTERMEDIATE = new Game(16, 16, 40);
         EXPERT = new Game(MAX_X, MAX_Y, 99);
@@ -188,32 +175,32 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
     /**
      * The background color of the game.
      */
-    private Color background;
+    private Color backgroundColor;
 
     /**
      * The foreground color of the game.
      */
-    private Color foreground;
+    private Color foregroundColor;
 
     /**
      * Indicates whether mouse button 1 is pressed.
      */
-    private boolean M_BUTTON1;
+    private boolean mButton1;
 
     /**
      * Indicates whether mouse button 2 is pressed.
      */
-    private boolean M_BUTTON2;
+    private boolean mButton2;
 
     /**
      * Indicates whether mouse button 3 is pressed.
      */
-    private boolean M_BUTTON3;
+    private boolean mButton3;
 
     /**
      * Indicates whether both mouse buttons are pressed.
      */
-    private boolean M_BOTH;
+    private boolean mBoth;
 
     /**
      * The current mouse pointer location.
@@ -243,12 +230,12 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
     /**
      * Array of images representing different faces for the game.
      */
-    private Image[] imgFace;
+    private transient Image[] imgFace;
 
     /**
      * Array of images representing different digits for the timer.
      */
-    private Image[] imgTime;
+    private transient Image[] imgTime;
 
     /**
      * The current face displayed in the game.
@@ -333,27 +320,28 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
     /**
      * Graphics context for the off-screen buffer.
      */
-    private Graphics bufferGC;
+    private transient Graphics bufferGC;
 
     /**
      * Off-screen buffer for double buffering.
      */
-    private Image buffer;
+    private transient Image buffer;
 
     /**
      * Constructs a new JMine object with default settings.
      */
     public JMine() {
-        this.background = JMine.DEFAULT_BACKGROUND;
-        this.foreground = JMine.DEFAULT_FOREGROUND;
-        this.M_BUTTON1 = false;
-        this.M_BUTTON2 = false;
-        this.M_BUTTON3 = false;
-        this.M_BOTH = false;
+        this.rand = new Random();
+        this.backgroundColor = JMine.DEFAULT_BACKGROUND;
+        this.foregroundColor = JMine.DEFAULT_FOREGROUND;
+        this.mButton1 = false;
+        this.mButton2 = false;
+        this.mButton3 = false;
+        this.mBoth = false;
         this.newGame = true;
         this.clearScreen = true;
-        this.face = Smile.SMILE;
-        this.oldFace = Smile.SMILE;
+        this.face = Smile.SMILE_STATE;
+        this.oldFace = Smile.SMILE_STATE;
         this.faceChanged = true;
         this.hidden = -1;
         this.mines = -1;
@@ -375,12 +363,35 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      *
      * @param args The command-line arguments (not used in this method).
      */
-    public static void main(String[] args) {
+    public static void main(String @NotNull [] args) {
+        // Handle command line arguments
+        boolean debugLogging = false;
+        boolean consolePrint = false;
+        for (String arg : args) {
+            if (arg.startsWith("--debug")) {
+                debugLogging = true;
+            }
+            if (arg.startsWith("--consoleOutput")) {
+                consolePrint = true;
+            }
+        }
+
+        // Process command line settings
+        if (!debugLogging) {
+            setLoggingLevel("INFO");
+        }
+        if (consolePrint) {
+            logger.info("console printing enabled");
+            setLoggingLevel("INFO");
+        } else {
+            disableConsoleLogging();
+        }
+
         JMine jmine = new JMine();
 
         frame = new JFrame("JMine");
         frame.setLayout(new BorderLayout());
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         frame.add(jmine, BorderLayout.CENTER);
         frame.setLocationRelativeTo(null);
@@ -390,6 +401,105 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
         frame.setVisible(true);
         jmine.timer = new Timer(1000, e -> jmine.run());
         jmine.run();
+    }
+
+    /**
+     * Indicates whether a 3-button mouse is supported.
+     */
+    public static boolean isM3ButtonMouse() {
+        return m3ButtonMouse;
+    }
+
+    public static void setM3ButtonMouse(boolean m3ButtonMouse) {
+        JMine.m3ButtonMouse = m3ButtonMouse;
+    }
+
+    /**
+     * The horizontal offset for positioning game components.
+     */
+    public static int getOffsetX() {
+        return offsetX;
+    }
+
+    public static void setOffsetX(int offsetX) {
+        JMine.offsetX = offsetX;
+    }
+
+    /**
+     * The vertical offset for positioning game components.
+     */
+    public static int getOffsetY() {
+        return offsetY;
+    }
+
+    public static void setOffsetY(int offsetY) {
+        JMine.offsetY = offsetY;
+    }
+
+    /**
+     * The x-coordinate for positioning the flags display.
+     */
+    public static int getFlagsX() {
+        return flagsX;
+    }
+
+    public static void setFlagsX(int flagsX) {
+        JMine.flagsX = flagsX;
+    }
+
+    /**
+     * The y-coordinate for positioning the flags display.
+     */
+    public static int getFlagsY() {
+        return flagsY;
+    }
+
+    public static void setFlagsY(int flagsY) {
+        JMine.flagsY = flagsY;
+    }
+
+    /**
+     * The x-coordinate for positioning the face display.
+     */
+    public static int getFaceX() {
+        return faceX;
+    }
+
+    public static void setFaceX(int faceX) {
+        JMine.faceX = faceX;
+    }
+
+    /**
+     * The y-coordinate for positioning the face display.
+     */
+    public static int getFaceY() {
+        return faceY;
+    }
+
+    public static void setFaceY(int faceY) {
+        JMine.faceY = faceY;
+    }
+
+    /**
+     * The x-coordinate for positioning the timer display.
+     */
+    public static int getTimeX() {
+        return timeX;
+    }
+
+    public static void setTimeX(int timeX) {
+        JMine.timeX = timeX;
+    }
+
+    /**
+     * The y-coordinate for positioning the timer display.
+     */
+    public static int getTimeY() {
+        return timeY;
+    }
+
+    public static void setTimeY(int timeY) {
+        JMine.timeY = timeY;
     }
 
     /**
@@ -405,11 +515,11 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
     public void init() {
         gameParams = new GameParameters();
         this.difficulty = JMine.BEGINNER;
-        this.M_BOTH = false;
-        JMine.M_3BUTTON_MOUSE = false;
-        this.M_BUTTON1 = false;
-        this.M_BUTTON2 = false;
-        this.M_BUTTON3 = false;
+        this.mBoth = false;
+        JMine.setM3ButtonMouse(false);
+        this.mButton1 = false;
+        this.mButton2 = false;
+        this.mButton3 = false;
         this.tiles = null;
         this.addMouseListener(this);
         this.addMouseMotionListener(this);
@@ -441,25 +551,25 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
         final String parameter = this.getParameter("bgColor");
         if (parameter != null) {
             try {
-                this.background = Color.decode(parameter);
+                this.backgroundColor = Color.decode(parameter);
             } catch (final NumberFormatException ex) {
-                this.background = JMine.DEFAULT_BACKGROUND;
+                this.backgroundColor = JMine.DEFAULT_BACKGROUND;
             }
         } else {
-            this.background = JMine.DEFAULT_BACKGROUND;
+            this.backgroundColor = JMine.DEFAULT_BACKGROUND;
         }
-        this.setBackground(this.background);
+        this.setBackground(this.backgroundColor);
         final String parameter2 = this.getParameter("fgColor");
         if (parameter2 != null) {
             try {
-                this.foreground = Color.decode(parameter2);
+                this.foregroundColor = Color.decode(parameter2);
             } catch (final NumberFormatException ex2) {
-                this.foreground = JMine.DEFAULT_FOREGROUND;
+                this.foregroundColor = JMine.DEFAULT_FOREGROUND;
             }
         } else {
-            this.foreground = JMine.DEFAULT_FOREGROUND;
+            this.foregroundColor = JMine.DEFAULT_FOREGROUND;
         }
-        this.setForeground(this.foreground);
+        this.setForeground(this.foregroundColor);
         final String parameter3 = this.getParameter("difficulty");
         if (parameter3 == null) {
             this.difficulty = JMine.BEGINNER;
@@ -491,50 +601,40 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      */
     public void loadImages() {
         final int n = 32;
-        int w = this.getSize().width, h = this.getSize().height;
+        int w = this.getSize().width;
+        int h = this.getSize().height;
         this.buffer = this.createImage(w, h);
         if (this.buffer == null) {
             this.buffer = new BufferedImage(w, w, BufferedImage.TYPE_INT_ARGB);
         }
-        (this.bufferGC = this.buffer.getGraphics()).setColor(this.background);
+        (this.bufferGC = this.buffer.getGraphics()).setColor(this.backgroundColor);
         final MediaTracker mediaTracker = new MediaTracker(this);
         String imagePath = this.getParameter("image_path");
         if (imagePath == null) {
             imagePath = "images/";
         } else if (imagePath.lastIndexOf("/") != imagePath.length() - 1) {
-            imagePath = imagePath + "/";
+            imagePath = imagePath + File.separatorChar;
         }
         Object cb = this.getCodeBase().toString();
         if (cb == null) {
-            System.out.println("DEBUG: no F");
+            logger.debug("DEBUG: no F");
             cb = "/";
         }
         for (int i = 0; i < 16; ++i) {
-            final String string = i + ".gif";
-            MineTile.images[i] = this.getImage(cb.toString(), imagePath + string);
-            mediaTracker.addImage(MineTile.images[i], i);
-            try {
-                this.showStatus("Loading image: " + (i + 1) + "/" + n + " (" + imagePath + string + ")");
-                mediaTracker.waitForID(i);
-            } catch (final InterruptedException ignored) {
-                Thread.currentThread().interrupt();
-            }
-            if (mediaTracker.isErrorID(i)) {
-                this.showStatus("Error loading " + imagePath + string);
-            }
+            loadGifs(i, cb, imagePath, mediaTracker, n);
         }
         this.imgFace = new Image[Smile.NUM_FACES];
         for (int j = 0; j < Smile.NUM_FACES; ++j) {
             final String string2 = "f" + j + ".gif";
             mediaTracker.addImage(this.imgFace[j] = this.getImage(cb.toString(), imagePath + string2), j + 16);
             try {
-                this.showStatus("Loading image: " + (j + 16 + 1) + "/" + n + " (" + imagePath + string2 + ")");
+                this.showStatus(LOADING_IMAGE + (j + 16 + 1) + "/" + n + " (" + imagePath + string2 + ")");
                 mediaTracker.waitForID(j + 16);
             } catch (final InterruptedException ignored) {
                 Thread.currentThread().interrupt();
             }
             if (mediaTracker.isErrorID(j + 16)) {
-                this.showStatus("Error loading " + imagePath + string2);
+                this.showStatus(ERROR_LOADING + imagePath + string2);
             }
         }
         this.imgTime = new Image[11];
@@ -542,14 +642,29 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
             final String tn = "t" + k + ".gif";
             mediaTracker.addImage(this.imgTime[k] = this.getImage(cb.toString(), imagePath + tn), k + 16 + 5 + 1);
             try {
-                this.showStatus("Loading image: " + (k + 16 + 5 + 1) + "/" + n + " (" + imagePath + tn + ")");
+                this.showStatus(LOADING_IMAGE + (k + 16 + 5 + 1) + "/" + n + " (" + imagePath + tn + ")");
                 mediaTracker.waitForID(k + 16 + 5);
             } catch (final InterruptedException ignored) {
                 Thread.currentThread().interrupt();
             }
             if (mediaTracker.isErrorID(k + 16 + 5)) {
-                this.showStatus("Error loading " + imagePath + tn);
+                this.showStatus(ERROR_LOADING + imagePath + tn);
             }
+        }
+    }
+
+    private void loadGifs(int i, @NotNull Object cb, String imagePath, @NotNull MediaTracker mediaTracker, int n) {
+        final String string = i + ".gif";
+        MineTile.images[i] = this.getImage(cb.toString(), imagePath + string);
+        mediaTracker.addImage(MineTile.images[i], i);
+        try {
+            this.showStatus(LOADING_IMAGE + (i + 1) + "/" + n + " (" + imagePath + string + ")");
+            mediaTracker.waitForID(i);
+        } catch (final InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+        }
+        if (mediaTracker.isErrorID(i)) {
+            this.showStatus(ERROR_LOADING + imagePath + string);
         }
     }
 
@@ -643,13 +758,13 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      *
      * @param difficulty difficulty to set
      */
-    public void newGame(final Game difficulty) {
+    public void newGame(final @NotNull Game difficulty) {
         this.difficulty = difficulty;
         int dWidth = difficulty.width();
         int dHeight = difficulty.height();
         this.tiles = new MineTile[dWidth][dHeight];
         if (difficulty.mines() >= dWidth * dHeight) {
-            System.out.println("Impossible game!");
+            logger.info("Impossible game!");
             return;
         }
         int winHeight = (dHeight * TILE_SIZE) + FACE_SIZE + 60;
@@ -659,15 +774,15 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
         frame.setSize(winWidth + 16, winHeight + 4);
 
         this.setTime(0);
-        this.M_BOTH = false;
-        JMine.OFFSET_X = (winWidth - dWidth * TILE_SIZE) / 2;
-        JMine.OFFSET_Y = 40;
-        JMine.FLAGS_X = JMine.OFFSET_X + 3;
-        JMine.FLAGS_Y = 10;
-        JMine.FACE_X = JMine.OFFSET_X + dWidth * TILE_SIZE / 2 - FLAGS_WIDTH;
-        JMine.FACE_Y = 10;
-        JMine.TIME_X = JMine.OFFSET_X + dWidth * TILE_SIZE - 39;
-        JMine.TIME_Y = 10;
+        this.mBoth = false;
+        JMine.setOffsetX((winWidth - dWidth * TILE_SIZE) / 2);
+        JMine.setOffsetY(40);
+        JMine.setFlagsX(JMine.getOffsetX() + 3);
+        JMine.setFlagsY(10);
+        JMine.setFaceX(JMine.getOffsetX() + dWidth * TILE_SIZE / 2 - FLAGS_WIDTH);
+        JMine.setFaceY(10);
+        JMine.setTimeX(JMine.getOffsetX() + dWidth * TILE_SIZE - 39);
+        JMine.setTimeY(10);
 
         this.paintMe = new ArrayList<>();
         int n = 0;
@@ -677,7 +792,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
                 this.paintMe.add(this.tiles[i][j]);
             }
         }
-        Random rand = new Random();
+
         for (int i = 0; i < dWidth * dHeight; i++) {
             int x1 = rand.nextInt(dWidth);
             int y1 = rand.nextInt(dHeight);
@@ -712,7 +827,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
         this.mines = difficulty.mines();
         this.flagsChanged = true;
         this.timeChanged = true;
-        this.face = Smile.SMILE;
+        this.face = Smile.SMILE_STATE;
         this.faceChanged = true;
         this.newGame = true;
         frame.revalidate();
@@ -742,12 +857,13 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      *
      * @param graphics the <code>Graphics</code> context in which to paint
      */
+    @Override
     public void update(final Graphics graphics) {
         if (this.clearScreen) {
             this.paintAll = true;
         }
         if (this.clearScreen) {
-            this.bufferGC.setColor(this.background);
+            this.bufferGC.setColor(this.backgroundColor);
             this.bufferGC.fillRect(0, 0, this.getSize().width, this.getSize().height);
             this.paint(this.bufferGC);
             graphics.drawImage(this.buffer, 0, 0, this.getSize().width, this.getSize().height, this);
@@ -756,9 +872,9 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
         }
         if (this.paintAll) {
             this.paint(this.bufferGC);
-            graphics.drawImage(this.buffer, JMine.OFFSET_X, JMine.FACE_Y, this.tiles.length * 16 + JMine.OFFSET_X,
-                    this.tiles[0].length * 16 + JMine.OFFSET_Y, JMine.OFFSET_X, JMine.FACE_Y,
-                    this.tiles.length * 16 + JMine.OFFSET_X, this.tiles[0].length * 16 + JMine.OFFSET_Y, this);
+            graphics.drawImage(this.buffer, JMine.getOffsetX(), JMine.getFaceY(), this.tiles.length * 16 + JMine.getOffsetX(),
+                    this.tiles[0].length * 16 + JMine.getOffsetY(), JMine.getOffsetX(), JMine.getFaceY(),
+                    this.tiles.length * 16 + JMine.getOffsetX(), this.tiles[0].length * 16 + JMine.getOffsetY(), this);
             return;
         }
         this.paint(graphics);
@@ -768,7 +884,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      * Sets the smiley face graphic.
      * Use named fields from the Smile class:
      * <ul>
-     *     <li>{@link Smile#SMILE}</li>
+     *     <li>{@link Smile#SMILE_STATE}</li>
      *     <li>{@link Smile#WIN}</li>
      *     <li>{@link Smile#CLICK}</li>
      *     <li>{@link Smile#LOSE}</li>
@@ -830,6 +946,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      *
      * @param graphics the <code>Graphics</code> context in which to paint
      */
+    @Override
     public void paint(final Graphics graphics) {
         this.paintFace(graphics, this.paintAll);
         this.paintFlags(graphics, this.paintAll);
@@ -846,7 +963,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      */
     public void paintFace(final Graphics graphics, final boolean b) {
         if (b || this.faceChanged) {
-            graphics.drawImage(this.imgFace[this.face], JMine.FACE_X, JMine.FACE_Y, 26, 26, this);
+            graphics.drawImage(this.imgFace[this.face], JMine.getFaceX(), JMine.getFaceY(), 26, 26, this);
             this.faceChanged = false;
         }
     }
@@ -884,7 +1001,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
             for (int i = 0; i < 3; ++i) {
                 if (this.flagDigits[i] != array[i] || b) {
                     this.flagDigits[i] = array[i];
-                    graphics.drawImage(this.imgTime[this.flagDigits[i]], JMine.FLAGS_X + i * 13, JMine.FLAGS_Y,
+                    graphics.drawImage(this.imgTime[this.flagDigits[i]], JMine.getFlagsX() + i * 13, JMine.getFlagsY(),
                             FLAGS_WIDTH, FLAGS_HEIGHT, this);
                 }
             }
@@ -916,7 +1033,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
             for (int i = 0; i < 3; ++i) {
                 if (this.timeDigits[i] != array[i] || b) {
                     this.timeDigits[i] = array[i];
-                    graphics.drawImage(this.imgTime[this.timeDigits[i]], JMine.TIME_X + i * 13, JMine.TIME_Y,
+                    graphics.drawImage(this.imgTime[this.timeDigits[i]], JMine.getTimeX() + i * 13, JMine.getTimeY(),
                             TIME_WIDTH, TIME_HEIGHT, this);
                 }
             }
@@ -932,17 +1049,16 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      */
     public void paintTiles(final Graphics graphics, final boolean b) {
         if (this.tiles == null) {
-            //System.out.println("NULL!!!");
             return;
         }
         if (b) {
             for (int i = 0; i < this.tiles.length; ++i) {
                 for (int j = 0; j < this.tiles[i].length; ++j) {
                     if (this.tiles[i][j] == null) {
-                        System.out.println("NULL!");
+                        logger.debug("NULL!");
                     } else {
-                        this.tiles[i][j].draw(graphics, JMine.OFFSET_X + 16 * i,
-                                JMine.OFFSET_Y + 16 * j, this);
+                        this.tiles[i][j].draw(graphics, JMine.getOffsetX() + 16 * i,
+                                JMine.getOffsetY() + 16 * j, this);
                         this.tiles[i][j].touched = false;
                     }
                 }
@@ -950,8 +1066,8 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
             return;
         }
         for (final MineTile mineTile : this.paintMe) {
-            mineTile.draw(graphics, JMine.OFFSET_X + 16 * mineTile.x,
-                    JMine.OFFSET_Y + 16 * mineTile.y, this);
+            mineTile.draw(graphics, JMine.getOffsetX() + 16 * mineTile.x,
+                    JMine.getOffsetY() + 16 * mineTile.y, this);
             this.tiles[mineTile.x][mineTile.y].touched = false;
         }
         this.paintMe.clear();
@@ -1047,7 +1163,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
         }
         --this.hidden;
         if (this.hidden < 0) {
-            System.out.println("miscount!");
+            logger.debug("miscount!");
         }
         if (this.hidden == this.mines) {
             this.winGame();
@@ -1057,19 +1173,23 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
         }
         this.touch(x, y, this.tiles[x][y].number);
         if (this.tiles[x][y].index == 0) {
-            this.reveal(x - 1, y - 1);
-            this.reveal(x - 1, y);
-            this.reveal(x - 1, y + 1);
-            this.reveal(x, y + 1);
-            this.reveal(x + 1, y + 1);
-            this.reveal(x + 1, y);
-            this.reveal(x + 1, y - 1);
-            this.reveal(x, y - 1);
+            revealRecurse(x, y);
             return;
         }
         if (this.face != 3 && this.face != 1) {
-            this.setFace(Smile.SMILE);
+            this.setFace(Smile.SMILE_STATE);
         }
+    }
+
+    private void revealRecurse(int x, int y) {
+        this.reveal(x - 1, y - 1);
+        this.reveal(x - 1, y);
+        this.reveal(x - 1, y + 1);
+        this.reveal(x, y + 1);
+        this.reveal(x + 1, y + 1);
+        this.reveal(x + 1, y);
+        this.reveal(x + 1, y - 1);
+        this.reveal(x, y - 1);
     }
 
     /**
@@ -1088,9 +1208,9 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
     public void run() {
         if (!this.stopAll && !this.newGame) {
             final long runTimer = new Date().getTime() - this.startTime;
-            final int time = (int) (runTimer / 1000L);
-            if (time != this.time && !this.stopAll && !this.newGame) {
-                this.setTime(time);
+            final int iTime = (int) (runTimer / 1000L);
+            if (iTime != this.time && !this.stopAll && !this.newGame) {
+                this.setTime(iTime);
                 this.draw();
             }
         }
@@ -1153,7 +1273,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      *
      * @param keyEvent The KeyEvent object representing the key press event.
      */
-    public void keyPressed(final KeyEvent keyEvent) {
+    public void keyPressed(final @NotNull KeyEvent keyEvent) {
         switch (keyEvent.getKeyCode()) {
             case KeyEvent.VK_Q: {
                 this.stopCounter();
@@ -1161,17 +1281,19 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
                 return;
             }
             case KeyEvent.VK_R: {
-                if (this.M_BUTTON2) {
+                if (this.mButton2) {
                     this.squareUp(this.mp.x, this.mp.y);
                 } else {
                     this.retouch(this.mp.x, this.mp.y);
                 }
-                this.M_BUTTON1 = false;
-                this.M_BUTTON2 = false;
-                this.M_BUTTON3 = false;
+                this.mButton1 = false;
+                this.mButton2 = false;
+                this.mButton3 = false;
                 this.repaint();
+                break;
             }
             default: {
+                // empty
             }
         }
     }
@@ -1185,6 +1307,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      * @param keyEvent The KeyEvent object representing the key release event.
      */
     public void keyReleased(final KeyEvent keyEvent) {
+        // unused
     }
 
     /**
@@ -1196,6 +1319,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      * @param keyEvent The KeyEvent object representing the key typed event.
      */
     public void keyTyped(final KeyEvent keyEvent) {
+        // empty
     }
 
     /**
@@ -1207,6 +1331,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      * @param mouseEvent The MouseEvent object representing the mouse click event.
      */
     public void mouseClicked(final MouseEvent mouseEvent) {
+        // empty
     }
 
     /**
@@ -1222,39 +1347,38 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      *
      * @param mouseEvent The MouseEvent object representing the mouse press event.
      */
-    public void mousePressed(final MouseEvent mouseEvent) {
+    public void mousePressed(final @NotNull MouseEvent mouseEvent) {
         switch (mouseEvent.getModifiersEx()) {
             case InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK: {
                 // getMod() 20 - Completely unsure what is meant to happen here
-                this.M_BUTTON1 = true;
-                this.M_BUTTON3 = true;
-                this.M_BUTTON2 = true;
+                this.mButton1 = true;
+                this.mButton3 = true;
+                this.mButton2 = true;
                 break;
             }
-            case 0:
-            case InputEvent.BUTTON1_DOWN_MASK: { // 0 & 16
-                this.M_BUTTON1 = true;
+            case 0, InputEvent.BUTTON1_DOWN_MASK: { // 0 & 16
+                this.mButton1 = true;
                 break;
             }
             case InputEvent.BUTTON2_DOWN_MASK: { // 8
-                this.M_BUTTON2 = true;
-                JMine.M_3BUTTON_MOUSE = true;
+                this.mButton2 = true;
+                JMine.setM3ButtonMouse(true);
                 break;
             }
             case InputEvent.BUTTON3_DOWN_MASK: { // 4
-                this.M_BUTTON3 = true;
+                this.mButton3 = true;
                 break;
             }
             default: { // anything else
-                System.out.println("Unknown mousePressed: " + mouseEvent.getModifiersEx());
+                logger.debug("Unknown mousePressed: {}", mouseEvent.getModifiersEx());
                 return;
             }
         }
-        this.M_BUTTON2 = ((this.M_BUTTON1 && this.M_BUTTON3 && !JMine.M_3BUTTON_MOUSE) ||
-                (this.M_BUTTON2 && JMine.M_3BUTTON_MOUSE));
+        this.mButton2 = ((this.mButton1 && this.mButton3 && !JMine.isM3ButtonMouse()) ||
+                (this.mButton2 && JMine.isM3ButtonMouse()));
         final int x = mouseEvent.getX();
         final int y = mouseEvent.getY();
-        if (x >= JMine.FACE_X && x <= JMine.FACE_X + 26 && y >= JMine.FACE_Y && y <= JMine.FACE_Y + 26) {
+        if (x >= JMine.getFaceX() && x <= JMine.getFaceX() + 26 && y >= JMine.getFaceY() && y <= JMine.getFaceY() + 26) {
             this.setFace(Smile.PRESSED);
             this.draw();
             return;
@@ -1262,13 +1386,13 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
         if (this.face == Smile.LOSE || this.face == Smile.WIN) {
             return;
         }
-        final int x2 = (x - JMine.OFFSET_X) / 16;
-        final int y2 = (y - JMine.OFFSET_Y) / 16;
+        final int x2 = (x - JMine.getOffsetX()) / 16;
+        final int y2 = (y - JMine.getOffsetY()) / 16;
         if (this.mp == null) {
             this.mp = new Point(x2, y2);
         }
-        if (this.M_BUTTON2) {
-            this.M_BOTH = true;
+        if (this.mButton2) {
+            this.mBoth = true;
         }
         this.tilePress(x2, y2);
     }
@@ -1288,12 +1412,12 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
         if (x < 0 || y < 0 || x >= this.tiles.length || y >= this.tiles[0].length) {
             return;
         }
-        if (this.M_BUTTON2) {
+        if (this.mButton2) {
             // Middle mouse button pressed
             this.setFace(Smile.CLICK);
             this.mp = new Point(x, y);
             this.squareDown(x, y);
-        } else if (this.M_BUTTON1) {
+        } else if (this.mButton1) {
             // Left mouse button pressed
             if (this.tiles[x][y].index == MineTile.HIDDEN) {
                 this.touch(x, y, 0);
@@ -1302,7 +1426,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
             }
             this.mp = new Point(x, y);
             this.setFace(Smile.CLICK);
-        } else if (this.M_BUTTON3) {
+        } else if (this.mButton3) {
             // Right mouse button pressed
             if (this.tiles[x][y].index == MineTile.HIDDEN) {
                 this.setFlags(this.flags - 1);
@@ -1315,7 +1439,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
             }
         } else {
             // No mouse buttons recorded
-            System.out.println("Tried to press tile, but no buttons recorded!");
+            logger.info("Tried to press tile, but no buttons recorded!");
         }
         this.draw();
     }
@@ -1341,21 +1465,21 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
         if (x < 0 || y < 0 || x >= this.tiles.length || y >= this.tiles[0].length) {
             return;
         }
-        if (this.M_BUTTON2) {
+        if (this.mButton2) {
             if (this.squareFlags(x, y) == this.tiles[x][y].number &&
                     this.tiles[x][y].number == this.tiles[x][y].index) {
                 this.squareReveal(x, y);
             } else {
                 this.squareUp(x, y);
-                this.setFace(Smile.SMILE);
+                this.setFace(Smile.SMILE_STATE);
             }
             this.draw();
             return;
         }
-        if (this.M_BUTTON1 && !this.M_BOTH) {
+        if (this.mButton1 && !this.mBoth) {
             this.reveal(x, y);
             if (this.face == Smile.CLICK) {
-                this.setFace(Smile.SMILE);
+                this.setFace(Smile.SMILE_STATE);
             }
             this.draw();
         }
@@ -1372,50 +1496,50 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      * @see #tileRelease(int, int)
      */
     public void mouseReleased(final MouseEvent mouseEvent) {
-        if (!this.M_BUTTON1 || !this.M_BUTTON3 || JMine.M_3BUTTON_MOUSE) {
-            this.M_BOTH = false;
+        if (!this.mButton1 || !this.mButton3 || JMine.isM3ButtonMouse()) {
+            this.mBoth = false;
         }
         int men = mouseEvent.getModifiersEx();
         int x = mouseEvent.getX();
         int y = mouseEvent.getY();
-        if (x >= JMine.FACE_X && x <= JMine.FACE_X + 26 && y >= JMine.FACE_Y && y <= JMine.FACE_Y + 26) {
-            this.setFace(Smile.SMILE);
+        if (x >= JMine.getFaceX() && x <= JMine.getFaceX() + 26 && y >= JMine.getFaceY() && y <= JMine.getFaceY() + 26) {
+            this.setFace(Smile.SMILE_STATE);
             if (men == 256) {
                 this.showStatus("Loading options...");
                 this.mod.setGame(this.difficulty);
                 this.mod.setModal(true);
                 this.mod.setVisible(true);
                 this.difficulty = this.mod.getGame(this.difficulty);
-                this.setFace(Smile.SMILE);
+                this.setFace(Smile.SMILE_STATE);
                 this.draw();
             }
             this.newGame();
         } else if (this.face != Smile.LOSE && this.face != Smile.WIN) {
-            x = (x - JMine.OFFSET_X) / 16;
-            y = (y - JMine.OFFSET_Y) / 16;
+            x = (x - JMine.getOffsetX()) / 16;
+            y = (y - JMine.getOffsetY()) / 16;
             this.tileRelease(x, y);
         }
         switch (men) {
             case InputEvent.BUTTON3_DOWN_MASK, InputEvent.BUTTON1_DOWN_MASK, 0: {
-                this.M_BUTTON1 = false;
+                this.mButton1 = false;
                 break;
             }
             case InputEvent.BUTTON2_DOWN_MASK, 512: {
-                this.M_BUTTON2 = false;
-                JMine.M_3BUTTON_MOUSE = true;
+                this.mButton2 = false;
+                JMine.setM3ButtonMouse(true);
                 break;
             }
             case 256: {
-                this.M_BUTTON3 = false;
+                this.mButton3 = false;
                 break;
             }
             default: {
-                System.out.println("Unknown mouseReleased: " + mouseEvent.getModifiersEx());
+                logger.debug("Unknown mouseReleased: {}", mouseEvent.getModifiersEx());
                 break;
             }
         }
-        this.M_BUTTON2 = ((this.M_BUTTON1 && this.M_BUTTON3 && !JMine.M_3BUTTON_MOUSE) ||
-                (this.M_BUTTON2 && JMine.M_3BUTTON_MOUSE));
+        this.mButton2 = ((this.mButton1 && this.mButton3 && !JMine.isM3ButtonMouse()) ||
+                (this.mButton2 && JMine.isM3ButtonMouse()));
         this.mp = new Point(x, y);
     }
 
@@ -1430,7 +1554,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
         if (this.face == Smile.LOSE || this.face == Smile.WIN || this.face == Smile.CLICK) {
             return;
         }
-        if (this.M_BUTTON1) {
+        if (this.mButton1) {
             this.setFace(Smile.CLICK);
             this.draw();
         }
@@ -1446,8 +1570,8 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      * @see Smile
      */
     public void mouseExited(final MouseEvent mouseEvent) {
-        if (this.face != Smile.SMILE && this.face != Smile.LOSE && this.face != Smile.WIN) {
-            this.setFace(Smile.SMILE);
+        if (this.face != Smile.SMILE_STATE && this.face != Smile.LOSE && this.face != Smile.WIN) {
+            this.setFace(Smile.SMILE_STATE);
             this.draw();
         }
     }
@@ -1461,23 +1585,23 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      *
      * @param mouseEvent The MouseEvent object representing the mouse drag event.
      */
-    public void mouseDragged(final MouseEvent mouseEvent) {
+    public void mouseDragged(final @NotNull MouseEvent mouseEvent) {
         final int x = mouseEvent.getX();
         final int y = mouseEvent.getY();
         if (this.face == Smile.PRESSED) {
-            if (x < JMine.FACE_X || x > JMine.FACE_X + 26 || y < JMine.FACE_Y || y > JMine.FACE_Y + 26) {
+            if (x < JMine.getFaceX() || x > JMine.getFaceX() + 26 || y < JMine.getFaceY() || y > JMine.getFaceY() + 26) {
                 this.setFace(this.oldFace);
             }
             this.draw();
             return;
         }
-        if (x >= JMine.FACE_X && x <= JMine.FACE_X + 26 && y >= JMine.FACE_Y && y <= JMine.FACE_Y + 26) {
+        if (x >= JMine.getFaceX() && x <= JMine.getFaceX() + 26 && y >= JMine.getFaceY() && y <= JMine.getFaceY() + 26) {
             this.setFace(Smile.PRESSED);
             this.draw();
             return;
         }
-        final int xOffset = (x - JMine.OFFSET_X) / 16;
-        final int yOffset = (y - JMine.OFFSET_Y) / 16;
+        final int xOffset = (x - JMine.getOffsetX()) / 16;
+        final int yOffset = (y - JMine.getOffsetY()) / 16;
         if (this.mp == null) {
             this.mp = new Point(xOffset, yOffset);
         }
@@ -1485,11 +1609,11 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
             return;
         }
         if (xOffset != this.mp.x || yOffset != this.mp.y) {
-            if (this.M_BUTTON2) {
+            if (this.mButton2) {
                 this.squareUp(this.mp.x, this.mp.y);
                 this.squareDown(xOffset, yOffset);
                 this.draw();
-            } else if (this.M_BUTTON1 && !this.M_BOTH) {
+            } else if (this.mButton1 && !this.mBoth) {
                 this.retouch(this.mp.x, this.mp.y);
                 this.tilePress(xOffset, yOffset);
                 this.draw();
@@ -1507,14 +1631,7 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
      */
     public void squareReveal(final int x, final int y) {
         this.reveal(x, y);
-        this.reveal(x - 1, y - 1);
-        this.reveal(x - 1, y);
-        this.reveal(x - 1, y + 1);
-        this.reveal(x, y + 1);
-        this.reveal(x + 1, y + 1);
-        this.reveal(x + 1, y);
-        this.reveal(x + 1, y - 1);
-        this.reveal(x, y - 1);
+        revealRecurse(x, y);
     }
 
     /**
@@ -1631,24 +1748,49 @@ public class JMine extends JPanel implements MouseListener, MouseMotionListener,
             return;
         }
         if (mouseEvent.getModifiersEx() == 0) {
-            if ((this.M_BUTTON1 || this.M_BUTTON2 || this.M_BUTTON3) && this.mp != null) {
+            if ((this.mButton1 || this.mButton2 || this.mButton3) && this.mp != null) {
                 this.squareUp(this.mp.x, this.mp.y);
             }
-            this.M_BUTTON1 = false;
-            this.M_BUTTON2 = false;
-            this.M_BUTTON3 = false;
-            this.M_BOTH = false;
+            this.mButton1 = false;
+            this.mButton2 = false;
+            this.mButton3 = false;
+            this.mBoth = false;
         }
+    }
+
+    public static void setLoggingLevel(String level) {
+        LoggerContext context = (LoggerContext) LogManager.getContext(false);
+
+        // Change the root logger level:
+        Configurator.setRootLevel(org.apache.logging.log4j.Level.toLevel(level));
+
+        // Update the context with the new configuration
+        context.updateLoggers();
+    }
+
+    public static void disableConsoleLogging() {
+        LoggerContext context = (LoggerContext) LogManager.getContext(false);
+        Configuration config = context.getConfiguration();
+
+        // Remove the console appender from the root logger
+        config.getRootLogger().removeAppender("Console");
+
+        // Update the context with the new configuration
+        context.updateLoggers();
     }
 
     /**
      * Represents different facial expressions for the smiley face in the Minesweeper game.
      */
     static class Smile {
+        private Smile() {
+            // hidden
+        }
+
         /**
          * Represents a normal smiling face.
          */
-        public static final int SMILE = 0;
+        public static final int SMILE_STATE = 0;
         /**
          * Represents a winning face.
          */

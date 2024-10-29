@@ -64,12 +64,12 @@ class NameDialog extends Dialog implements WindowListener, ActionListener {
     /**
      * The background color of the dialog box.
      */
-    private final Color background;
+    private final Color backgroundColor;
 
     /**
      * The foreground color of the dialog box.
      */
-    private final Color foreground;
+    private final Color foregroundColor;
 
     /**
      * The text field for entering the name.
@@ -89,16 +89,15 @@ class NameDialog extends Dialog implements WindowListener, ActionListener {
      */
     public NameDialog(final Frame owner, String text) {
         super(owner, "New High Score!", false);
-        this.background = NameDialog.DEFAULT_BACKGROUND;
-        this.foreground = NameDialog.DEFAULT_FOREGROUND;
+        this.backgroundColor = NameDialog.DEFAULT_BACKGROUND;
+        this.foregroundColor = NameDialog.DEFAULT_FOREGROUND;
         this.setBounds(CO_ORD_X, CO_ORD_Y, WIDTH, HEIGHT);
         this.setFont(NameDialog.DEFAULT_FONT);
-        this.setBackground(this.background);
-        this.setForeground(this.foreground);
+        this.setBackground(this.backgroundColor);
+        this.setForeground(this.foregroundColor);
         (this.field = new TextField(20)).setText(text);
-        this.field.setBackground(this.foreground);
+        this.field.setBackground(this.foregroundColor);
         this.field.setForeground(Color.black);
-        //text = text;
         this.field.addActionListener(this);
         this.setLayout(new GridBagLayout());
         final GridBagConstraints gridBagConstraints = new GridBagConstraints();
@@ -133,6 +132,7 @@ class NameDialog extends Dialog implements WindowListener, ActionListener {
      *
      * @return The name entered by the user.
      */
+    @Override
     public String getName() {
         return this.name;
     }
@@ -148,21 +148,27 @@ class NameDialog extends Dialog implements WindowListener, ActionListener {
     }
 
     public void windowClosed(final WindowEvent windowEvent) {
+        // Empty
     }
 
     public void windowOpened(final WindowEvent windowEvent) {
+        // Empty
     }
 
     public void windowIconified(final WindowEvent windowEvent) {
+        // Empty
     }
 
     public void windowDeiconified(final WindowEvent windowEvent) {
+        // Empty
     }
 
     public void windowActivated(final WindowEvent windowEvent) {
+        // Empty
     }
 
     public void windowDeactivated(final WindowEvent windowEvent) {
+        // Empty
     }
 
     /**
@@ -170,8 +176,9 @@ class NameDialog extends Dialog implements WindowListener, ActionListener {
      *
      * @return The background color of the dialog.
      */
+    @Override
     public Color getBackground() {
-        return this.background;
+        return this.backgroundColor;
     }
 
     /**
@@ -179,7 +186,8 @@ class NameDialog extends Dialog implements WindowListener, ActionListener {
      *
      * @return The foreground color of the dialog.
      */
+    @Override
     public Color getForeground() {
-        return this.foreground;
+        return this.foregroundColor;
     }
 }

@@ -19,10 +19,15 @@ import java.util.HashMap;
  * @since 1.0
  */
 public class GameParameters {
+    public static final String DIFFICULTY = "difficulty";
+    public static final String FG_COLOR = "fgColor";
+    public static final String BG_COLOR = "bgColor";
+    public static final String IMAGE_PATH = "image_path";
     /**
      * A HashMap that stores key-value pairs representing various game parameters.
      * The keys are String identifiers for the parameters, and the values are their corresponding settings.
      */
+    @SuppressWarnings("all")
     public HashMap<String, String> paramMap;
 
     /**
@@ -31,10 +36,10 @@ public class GameParameters {
      */
     GameParameters() {
         paramMap = new HashMap<>();
-        paramMap.put("difficulty", "beginner"); // can be beginner, intermediate or expert
-        paramMap.put("fgColor", "#000000");
-        paramMap.put("bgColor", "#FFFFFF");
-        paramMap.put("image_path", "images");
+        paramMap.put(DIFFICULTY, "beginner"); // can be beginner, intermediate or expert
+        paramMap.put(FG_COLOR, "#000000");
+        paramMap.put(BG_COLOR, "#FFFFFF");
+        paramMap.put(IMAGE_PATH, "images");
 
     }
 
@@ -47,10 +52,10 @@ public class GameParameters {
     GameParameters(HashMap<String, String> hashMap) {
         paramMap = new GameParameters().paramMap;
 
-        paramMap.put("difficulty", hashMap.get("difficulty"));
-        paramMap.put("fgColor", hashMap.get("fgColor"));
-        paramMap.put("bgColor", hashMap.get("bgColor"));
-        paramMap.put("image_path", hashMap.get("image_path"));
+        paramMap.put(DIFFICULTY, hashMap.get(DIFFICULTY));
+        paramMap.put(FG_COLOR, hashMap.get(FG_COLOR));
+        paramMap.put(BG_COLOR, hashMap.get(BG_COLOR));
+        paramMap.put(IMAGE_PATH, hashMap.get(IMAGE_PATH));
 
     }
 
